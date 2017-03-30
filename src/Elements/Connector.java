@@ -29,7 +29,7 @@ import java.util.List;
         //addStyle("whiteSpace","wrap");//выравнивание текста - по ширине элемента
         addStyle("fontColor","black");
         addStyle("deletable","1");
-        addStyle("fontSize","16");
+        addStyle("fontSize","20");
         addStyle("fontFamily","Times New Roman");
         //addStyle("orthogonal", "0");
         addStyle("strokeWidth", "1"); 
