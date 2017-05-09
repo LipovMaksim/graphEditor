@@ -9,6 +9,8 @@ import com.mxgraph.util.mxEventObject;
 import com.mxgraph.util.mxEventSource.mxIEventListener;
 import com.mxgraph.util.mxPoint;
 import com.mxgraph.view.mxGraphSelectionModel;
+import static diagrammeditorx.Buttons.save_matrSmej;
+import forms.IncMatr;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -70,6 +72,7 @@ public class MyFrame extends JFrame{
     public MyGraphComponent getGraphComponent(){
         return graphComponent;
     }
+    
     private MyGraph graph = null;                       // Граф
     private static MyFrame frame = null;                // Экземпляр текущего окна
     
@@ -102,13 +105,13 @@ public class MyFrame extends JFrame{
         transferHandler = (mxGraphTransferHandler) graphComponent.getTransferHandler(); // Создание менеджера копирования/вставки
         JPanel graphPanel = new JPanel();
         JPanel smejMatr = new JPanel();
-        JPanel invMatr = new JPanel();
+        JPanel incMatr = new JPanel();
         JPanel vesovMatr = new JPanel();
         JPanel spisokReber = new JPanel();
         JPanel smejStruct = new JPanel();
         graphPanel.setLayout(new BorderLayout());
         smejMatr.setLayout(new BorderLayout());
-        invMatr.setLayout(new BorderLayout());
+        incMatr.setLayout(new BorderLayout());
         vesovMatr.setLayout(new BorderLayout());
         spisokReber.setLayout(new BorderLayout());
         smejStruct.setLayout(new BorderLayout());
@@ -118,25 +121,71 @@ public class MyFrame extends JFrame{
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.add("Граф", graphPanel);
         tabbedPane.add("Матрица смежности", smejMatr);
-        tabbedPane.add("Матрица инвариантности", invMatr);
         tabbedPane.add("Матрица весов", vesovMatr);
+        tabbedPane.add("Матрица инцидентности", incMatr);
         tabbedPane.add("Список ребер", spisokReber);
         tabbedPane.add("Структура смежности", smejStruct);
         
         JPanel matrSmejButtonsPanel = new JPanel(new GridLayout(1,2,1,1));
         matrSmejButtonsPanel.add(Buttons.addVertex_matrSmej,BorderLayout.NORTH);
         matrSmejButtonsPanel.add(Buttons.removeVertex_matrSmej,BorderLayout.CENTER);
-        //matrSmejButtonsPanel.add(Buttons.addRow_matrSmej,BorderLayout.CENTER);
+        matrSmejButtonsPanel.add(Buttons.save_matrSmej,BorderLayout.CENTER);
         //matrSmejButtonsPanel.add(Buttons.removeRow_matrSmej,BorderLayout.CENTER);
         smejMatr.add(matrSmejButtonsPanel,BorderLayout.NORTH);
+        JPanel matrVesovButtonsPanel = new JPanel(new GridLayout(1,2,1,1));
+        matrVesovButtonsPanel.add(Buttons.addVertex_matrVesov,BorderLayout.NORTH);
+        matrVesovButtonsPanel.add(Buttons.removeVertex_matrVesov,BorderLayout.CENTER);
+        matrVesovButtonsPanel.add(Buttons.save_matrVesov,BorderLayout.CENTER);
+        vesovMatr.add(matrVesovButtonsPanel,BorderLayout.NORTH);
         smejMatr.add(GraphWorker.matrSmej,BorderLayout.CENTER);
-        invMatr.add(GraphWorker.matrInv,BorderLayout.CENTER);
         vesovMatr.add(GraphWorker.matrVesov,BorderLayout.CENTER);
-        //spisokReber.add();
+        IncMatr im =  new IncMatr();
+        GraphWorker.matrInv = im.getTable();
+        incMatr.add(im,BorderLayout.CENTER);
+        
+        JPanel spisokReberButtonsPanel = new JPanel(new GridLayout(1,2,1,1));
+        spisokReberButtonsPanel.add(Buttons.addEdge_spisokReber,BorderLayout.NORTH);
+        spisokReberButtonsPanel.add(Buttons.removeEdge_spisokReber,BorderLayout.CENTER);
+        spisokReberButtonsPanel.add(Buttons.save_spisokReber,BorderLayout.CENTER);
+        spisokReber.add(spisokReberButtonsPanel,BorderLayout.NORTH);
+        spisokReber.add(GraphWorker.spisokReber,BorderLayout.CENTER);
+        
+        JPanel structSmejButtonsPanel = new JPanel(new GridLayout(1,2,1,1));
+        structSmejButtonsPanel.add(Buttons.addVertex_structSmej,BorderLayout.NORTH);
+        structSmejButtonsPanel.add(Buttons.removeVertex_structSmej,BorderLayout.CENTER);
+        structSmejButtonsPanel.add(Buttons.save_structSmej,BorderLayout.CENTER);
+        smejStruct.add(structSmejButtonsPanel,BorderLayout.NORTH);
         smejStruct.add(GraphWorker.structSmej,BorderLayout.CENTER);
            
         this.getContentPane().add(tabbedPane);
 
+        Buttons.save_matrSmej.addActionListener((ActionEvent e) -> {
+            graph = GraphWorker.createGraphFromeSmejMatr();
+            graphComponent.setGraph(graph);
+            graph.getSelectionModel().addListener(mxEvent.CHANGE, mxIEventListener);
+            saveFromView ();
+        });
+        
+        Buttons.save_matrVesov.addActionListener((ActionEvent e) -> {
+            graph = GraphWorker.createGraphFromeVesovMatr();
+            graphComponent.setGraph(graph);
+            graph.getSelectionModel().addListener(mxEvent.CHANGE, mxIEventListener);
+            saveFromView ();
+        });
+        
+        Buttons.save_spisokReber.addActionListener((ActionEvent e) -> {
+            graph = GraphWorker.createGraphFromeSpisokReber();
+            graphComponent.setGraph(graph);
+            graph.getSelectionModel().addListener(mxEvent.CHANGE, mxIEventListener);
+            saveFromView ();
+        });
+        
+        Buttons.save_structSmej.addActionListener((ActionEvent e) -> {
+            graph = GraphWorker.createGraphFromeStructSmej();
+            graphComponent.setGraph(graph);
+            graph.getSelectionModel().addListener(mxEvent.CHANGE, mxIEventListener);
+            saveFromView ();
+        });
     
         // Создание панели меню
         JMenuBar menuBar = new JMenuBar();
@@ -801,7 +850,7 @@ public class MyFrame extends JFrame{
         saveGraph.addActionListener(new ActionListener() { 
             @Override 
             public void actionPerformed(ActionEvent e) { 
-                GraphWorker.fillSmejMatr(graph);
+                saveFromView ();
             } 
         }); 
         ButtonsPanelSave.add(saveGraph);
@@ -812,6 +861,20 @@ public class MyFrame extends JFrame{
         frame.setVisible(true);
     }
     
+    public void saveFromView () {
+        GraphWorker.fillSmejMatr(graph);
+        GraphWorker.fillIncMatr(graph);
+        GraphWorker.fillVesovMatr(graph);
+        GraphWorker.fillSpisokReber(graph);
+        GraphWorker.fillStructSmej(graph);
+    }
+    
+    public void saveIncMatr () {
+        graph = GraphWorker.createGraphFromeIncMatr();
+        graphComponent.setGraph(graph);
+        graph.getSelectionModel().addListener(mxEvent.CHANGE, mxIEventListener);
+        saveFromView ();
+    }
     // Установка текущего инструмента
     public void setCurrentTool (Tool tool)
     {

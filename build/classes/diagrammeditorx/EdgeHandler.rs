@@ -1,3 +1,3 @@
-diagrammeditorx.Cell
 diagrammeditorx.EdgeHandler
 diagrammeditorx.Table
+diagrammeditorx.Cell

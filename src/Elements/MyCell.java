@@ -19,6 +19,8 @@ abstract public class MyCell extends mxCell{
      * @return - полная подпись элемента
      */
     public String getFullText(){
+        if (fullText == null)
+            fullText = (String) value;
         if (fullText.isEmpty())
             return (String)getValue();
         return fullText;
