@@ -10,6 +10,7 @@ import com.mxgraph.util.mxEventSource.mxIEventListener;
 import com.mxgraph.util.mxPoint;
 import com.mxgraph.view.mxGraphSelectionModel;
 import static diagrammeditorx.Buttons.save_matrSmej;
+import forms.FinderFrame;
 import forms.IncMatr;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -190,6 +191,21 @@ public class MyFrame extends JFrame{
         // Создание панели меню
         JMenuBar menuBar = new JMenuBar();
         JMenu menu = new JMenu("Файл");
+        JMenu finderMenu = new JMenu("Поиск");
+        
+        JMenuItem pathFinderMenuItem = new JMenuItem("Поиск k кратчайших путей");
+        pathFinderMenuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                FinderFrame ff = new FinderFrame ();
+                ff.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                ff.setTitle("Поиск k кратчайших путей");
+                ff.setGraph(new GraphWorker.GraphInfo(graph));
+                ff.show();
+            }
+        });
+        finderMenu.add(pathFinderMenuItem);
+        
         
         //Сохранение в картинку
         JMenuItem saveAsImage = new JMenuItem("Сохранить как изображение");
@@ -251,6 +267,7 @@ public class MyFrame extends JFrame{
                 });
                 menu.add(printMI); //Добавляем в меню печать
                 menuBar.add(menu); //Добавляем меню на панель
+                
                 fr.setJMenuBar(menuBar); //Добавляем панель на фрейм
                 
                 int xs=(int)(lw*0.02), ys = (int)(lh*0.02); //Стартовые координаты картинки
@@ -359,6 +376,7 @@ public class MyFrame extends JFrame{
         
         // Добавление меню к окну
         menuBar.add(menu);
+        menuBar.add(finderMenu);
         this.setJMenuBar(menuBar);
         
         // Добавление меню по правой кнопке мыши

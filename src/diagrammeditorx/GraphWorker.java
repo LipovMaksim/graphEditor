@@ -194,18 +194,6 @@ public class GraphWorker {
         }
     }
 
-    Point [] points = {
-        new Point (450, 10),
-        new Point (450, 890),
-        new Point (10, 450),
-        new Point (890, 450),
-        new Point (150, 150),
-        new Point (750, 750),
-        new Point (750, 150),
-        new Point (150, 750),
-        new Point (250, 100),
-        new Point (450, 10)
-    };
     static public MyGraph createGraphFromeSmejMatr () {
         GraphInfo gi = new GraphInfo();
         TableModel tabModel = matrSmej.getModel();
@@ -452,6 +440,111 @@ public class GraphWorker {
         }
         return graph;
     }
+    
+    public static ArrayList <ArrayList <Edge>> findShortestPaths (int s, int t, GraphInfo gi, int k) {
+        ArrayList<ArrayList<Edge>> res = new ArrayList<ArrayList<Edge>>();
+        ArrayList <Edge> exceptions = new ArrayList<Edge> ();
+        res.add(findShortestPath(s, t, gi, exceptions));
+        int ind = 0;
+        for (int i = 1; i < k && ind > -1; i++) {
+            ArrayList<ArrayList<Edge>> paths = new ArrayList<ArrayList<Edge>> ();
+            ArrayList<Edge> prev = res.get(res.size() - 1);
+            int n = prev.size();
+            ind = -1;
+            double minLength = Double.MAX_VALUE;
+            for (int j = 0; j < n; j++) {
+                exceptions.add(prev.get(j));
+                ArrayList<Edge> path = findShortestPath(s, t, gi, exceptions);
+                exceptions.remove(exceptions.size() - 1);
+                
+                double d = pathLength(path);
+                if (path.size() == 0) {
+                    d = Double.MAX_VALUE;
+                }
+                if (minLength > d) {
+                    minLength = d;
+                    ind = j;
+                }
+                paths.add(path);
+            }
+            if (ind > -1) {
+                res.add(paths.get(ind));
+                exceptions.add(prev.get(ind));
+            }
+        }
+        return res;
+    }
+    
+    private static double pathLength (ArrayList<Edge> path) {
+        int n = path.size();
+        double d = 0;
+        for (int i = 0; i < n; i++) {
+            d += path.get(i).getDoubleValue();
+        }
+        return d;
+    }
+    
+    public static ArrayList <Edge> findShortestPath (int s, int t, GraphInfo gi, ArrayList <Edge> exceptions) {
+        ArrayList<Edge> res = new ArrayList<Edge>();
+        double [] d = new double [gi.getVertexCount()];
+        int [] path = new int [gi.getVertexCount()];
+        boolean [] u = new boolean [gi.getVertexCount()];
+        for (int i = 0; i < d.length; i++) {
+            d[i] = Double.MAX_VALUE;
+            u[i] = true;
+            path[i] = -1;
+        }
+        d[s] = 0;
+        u[s] = false;
+        
+        ArrayList <Integer> vertexs = new ArrayList<Integer> ();
+        vertexs.add(s);
+
+        while (contains (u, true) && !vertexs.isEmpty()) {
+            int n = vertexs.size();
+            ArrayList <Integer> nextVertexs = new ArrayList<Integer> ();
+            for (int i = 0; i < n; i++) {
+                ArrayList<Edge> outEdges = gi.getOutEdges(vertexs.get(i), exceptions);
+                int m = outEdges.size();
+                for (int j = 0; j < m; j++) {
+                    int targetVertex = outEdges.get(j).getAnothreSide(vertexs.get(i));
+                    if (u[targetVertex]) {
+                        if (!nextVertexs.contains(targetVertex)) {
+                            nextVertexs.add(targetVertex);
+                        }
+                        double r = d[vertexs.get(i)] + outEdges.get(j).getDoubleValue();
+
+                        if (d[targetVertex] > r) {
+                            d[targetVertex] = r;
+                            path[targetVertex] = vertexs.get(i);
+                        }
+                    }
+                }
+            }
+            for (int i = 0; i < n; i++) {
+                u[vertexs.get(i)] = false;
+            }
+            vertexs = nextVertexs;
+        }
+        if (d[t] != Double.MAX_VALUE) {
+            int cur = t;
+            while (cur != s) {
+                res.add(0, gi.getEdge(path[cur], cur));
+                cur = path[cur];
+            }
+        }
+        return res;
+    }
+    
+    static private boolean contains (boolean[] arr, boolean val) {
+        for (int i = 0; i < arr.length; i++) {
+            if (arr[i] == val) {
+                return true;
+            }
+        }
+        return false;
+    }
+
         
     static public void addColumn (JTable table) {
         addColumn(table, false);
@@ -494,6 +587,62 @@ public class GraphWorker {
     public static class GraphInfo {
         ArrayList <String> vertexs = new ArrayList<String> ();
         ArrayList <Edge> edges = new ArrayList<Edge> ();
+        
+        public GraphInfo () {
+            
+        }
+        
+        public GraphInfo (MyGraph graph) {
+            Object[] vertices = graph.getChildVertices(graph.getDefaultParent());
+            
+            for (int i = 0; i < vertices.length; i++){
+                vertexs.add (((BasicElement)vertices[i]).getFullText());
+            }
+            
+            for (int i = 0; i < vertices.length - 1; i++){
+                for (int j = i + 1; j < vertices.length; j++){
+                    Object[] edgesBetween = graph.getEdgesBetween(vertices[i], vertices[j]);
+                    if (edgesBetween.length > 0){
+                        String ageText = ((Connector) edgesBetween[0]).getFullText();
+                        if ( edgesBetween[0] instanceof Association){
+                            setEdge(i, j, ageText, true);
+                        }
+                        else {
+                            if (((SequenceFlow) edgesBetween[0]).getSource()== vertices[i])
+                                setEdge(i, j, ageText, false);
+                            else
+                                setEdge(j, i, ageText, false);
+                        }
+                    }
+                }
+            }
+        }
+        
+        public ArrayList <Edge> getOutEdges (int vertex, ArrayList <Edge> exceptions) {
+            ArrayList <Edge> res = new ArrayList <Edge> ();
+            int n = edges.size();
+            for (int i = 0; i < n; i++) {
+                Edge e = edges.get(i);
+                if (!exceptions.contains(e)) {
+                    if (e.source == vertex || e.target == vertex && e.association) {
+                        res.add(e);
+                    }
+                }
+            }
+            return res;
+        }
+        
+        public ArrayList <Edge> getOutEdges (int vertex) {
+            return getOutEdges(vertex, new ArrayList<Edge> ());
+        }
+        
+        public int getVertexCount () {
+            return vertexs.size();
+        }
+        
+        public int getEdgeCount () {
+            return edges.size();
+        }
         
         public void addVertex (String val) {
             vertexs.add(val);
@@ -546,6 +695,17 @@ public class GraphWorker {
             return false;
         }
         
+        public Edge getEdge(int s, int t) {
+            int n = edges.size();
+            for (int i = 0; i < n; i++) {
+                Edge e = edges.get(i);
+                if (e.getSource() == s && e.getTarget() == t || e.association && e.getSource() == t && e.getTarget() == s) {
+                    return e;
+                }
+            }
+            return null;
+        }
+        
         public int getVertexIndex (String val) {
             int n = vertexs.size();
             for (int i = 0; i < n; i++) {
@@ -595,5 +755,22 @@ public class GraphWorker {
             return value;
         }
         
+        public double getDoubleValue() {
+            if (value != null && value.matches("[0-9]+\\.?[0-9]*")){
+                double data = Double.parseDouble(value);
+                return data;
+            }
+            return 0;
+        }
+        
+        public int getAnothreSide (int side) {
+            if (side == source) {
+                return target;
+            }
+            else if (side == target) {
+                return source;
+            }
+            return -1;
+        }
     }
 }
