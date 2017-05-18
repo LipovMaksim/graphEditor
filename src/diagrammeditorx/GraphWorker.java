@@ -441,40 +441,62 @@ public class GraphWorker {
         return graph;
     }
     
+    /**
+     * ! Поиск k кратчайших путей в графе gi из вершины s в вершину t
+     * @param s - начало кратчайших путей
+     * @param t - конец кратчайших путей
+     * @param gi - граф
+     * @param k - количество кратчайших путей
+     * @return - кратчайшие пути
+     */
     public static ArrayList <ArrayList <Edge>> findShortestPaths (int s, int t, GraphInfo gi, int k) {
-        ArrayList<ArrayList<Edge>> res = new ArrayList<ArrayList<Edge>>();
-        ArrayList <Edge> exceptions = new ArrayList<Edge> ();
+        ArrayList<ArrayList<Edge>> res = new ArrayList<ArrayList<Edge>>(); //Контейнер результатов
+        ArrayList <Edge> exceptions = new ArrayList<Edge> (); //Контейнер дуг-исключений
+
+        //Найти кратчайший путь
         res.add(findShortestPath(s, t, gi, exceptions));
         int ind = 0;
         for (int i = 1; i < k && ind > -1; i++) {
+            //Возможные кратчайшие пути
             ArrayList<ArrayList<Edge>> paths = new ArrayList<ArrayList<Edge>> ();
-            ArrayList<Edge> prev = res.get(res.size() - 1);
+            ArrayList<Edge> prev = res.get(res.size() - 1); //Последний найденный кратчайший путь
             int n = prev.size();
             ind = -1;
             double minLength = Double.MAX_VALUE;
             for (int j = 0; j < n; j++) {
+                //Добавить j-ую дугу последнего найденного кратчайшего пути в список исключений
                 exceptions.add(prev.get(j));
+                //Найти кратчайший путь
                 ArrayList<Edge> path = findShortestPath(s, t, gi, exceptions);
+                //Удалить последнюю добавленную дугу из списка исключений
                 exceptions.remove(exceptions.size() - 1);
-                
+
+                //Найти длину полученнго пути
                 double d = pathLength(path);
                 if (path.size() == 0) {
                     d = Double.MAX_VALUE;
                 }
+                //Если длина найденнго пути менше минимально найденной
                 if (minLength > d) {
-                    minLength = d;
-                    ind = j;
+                    minLength = d;  //запомнить длину
+                    ind = j;        //запомнить индекс пути
                 }
+                //Добавить найденный путь в список путей
                 paths.add(path);
             }
-            if (ind > -1) {
-                res.add(paths.get(ind));
-                exceptions.add(prev.get(ind));
+            if (ind > -1) { //Если был найден хоть один путь
+                res.add(paths.get(ind)); //Добавить этот путь в результат
+                exceptions.add(prev.get(ind)); //Добавить в список исключений дугу, при помощи которой был найден этот путь
             }
         }
         return res;
     }
-    
+
+    /**
+     * ! Посчитать длину пути
+     * @param path - путь
+     * @return - длина пути
+     */
     private static double pathLength (ArrayList<Edge> path) {
         int n = path.size();
         double d = 0;
@@ -483,7 +505,15 @@ public class GraphWorker {
         }
         return d;
     }
-    
+
+    /**
+     * Найти кратчайший путь в графе gi из вершины s в вершину t, не переходя по дугам exceptions
+     * @param s - начало кратчайших путей
+     * @param t - конец кратчайших путей
+     * @param gi - граф
+     * @param exceptions - дуги, по которым нельзя осуществлять переходы
+     * @return - кратчайший путь, который можно получить, не переходя по дугам exceptions
+     */
     public static ArrayList <Edge> findShortestPath (int s, int t, GraphInfo gi, ArrayList <Edge> exceptions) {
         ArrayList<Edge> res = new ArrayList<Edge>();
         double [] d = new double [gi.getVertexCount()];
@@ -496,7 +526,7 @@ public class GraphWorker {
         }
         d[s] = 0;
         u[s] = false;
-        
+
         ArrayList <Integer> vertexs = new ArrayList<Integer> ();
         vertexs.add(s);
 
@@ -535,7 +565,13 @@ public class GraphWorker {
         }
         return res;
     }
-    
+
+    /**
+     * ! Содержит ли массив arr значение val
+     * @param arr - массив
+     * @param val - значение
+     * @return - содержит ли массив arr значение val
+     */
     static private boolean contains (boolean[] arr, boolean val) {
         for (int i = 0; i < arr.length; i++) {
             if (arr[i] == val) {
